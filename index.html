@@ -6,11 +6,67 @@
   <title>CV Tom Esnault</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
-    iframe { width: 100%; height: 100%; border: none; display: block; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+    }
+
+    #pdf-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 0;
+    }
+
+    canvas {
+      display: block;
+      box-shadow: 0 8px 60px rgba(0,0,0,0.8), 0 2px 20px rgba(0,0,0,0.5);
+      border-radius: 2px;
+    }
   </style>
 </head>
 <body>
-  <iframe src="CV_Tom_ESNAULT.pdf#toolbar=0&navpanes=0&scrollbar=0&view=FitH"></iframe>
+  <div id="pdf-container"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const container = document.getElementById('pdf-container');
+
+    async function renderPDF() {
+      const pdf = await pdfjsLib.getDocument('CV_Tom_ESNAULT.pdf').promise;
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+
+        // Scale based on window width for crisp display
+        const desiredWidth = Math.min(window.innerWidth - 48, 900);
+        const viewport = page.getViewport({ scale: 1 });
+        const scale = desiredWidth / viewport.width;
+        const scaledViewport = page.getViewport({ scale: scale * window.devicePixelRatio });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
+        canvas.style.width = desiredWidth + 'px';
+        canvas.style.height = (scaledViewport.height / window.devicePixelRatio) + 'px';
+
+        await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+        container.appendChild(canvas);
+      }
+    }
+
+    renderPDF();
+  </script>
 </body>
 </html>
